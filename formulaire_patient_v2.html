@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi post-infiltration — Dr Bidet</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600&display=swap');
+
+:root {
+  --ink: #0f1e2d; --ink2: #2a3f52; --muted: #7a92a5;
+  --border: #dce8f0; --bg: #f2f7fa; --card: #fff;
+  --accent: #1e6fa8; --accent-light: #ddeef8;
+  --green: #1a7a50; --green-light: #d6f0e4;
+  --amber: #b86b00; --amber-light: #fef0d6;
+  --red: #b02020; --red-light: #fce8e8;
+  --r: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; padding-bottom: 60px; }
+
+header {
+  background: var(--ink); color: white;
+  padding: 24px 20px 18px; position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 16px rgba(15,30,45,0.2);
+}
+header h1 { font-family: 'Instrument Serif', serif; font-size: 20px; font-weight: 400; }
+header p { font-size: 12px; opacity: 0.55; margin-top: 3px; }
+.progress { height: 3px; background: rgba(255,255,255,0.15); margin-top: 14px; border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: #62c4e8; border-radius: 2px; transition: width 0.4s; width: 5%; }
+
+.container { max-width: 540px; margin: 0 auto; padding: 0 16px; }
+
+/* Temps selector */
+.temps-row { display: flex; gap: 8px; padding: 20px 0 4px; }
+.t-btn {
+  flex: 1; padding: 10px 6px; border: 2px solid var(--border);
+  background: var(--card); border-radius: 10px;
+  font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 500;
+  color: var(--muted); cursor: pointer; text-align: center; transition: all 0.2s;
+}
+.t-btn small { display: block; font-size: 10px; opacity: 0.6; margin-top: 2px; }
+.t-btn.active { border-color: var(--accent); background: var(--accent-light); color: var(--ink); }
+
+/* Sections */
+section {
+  background: var(--card); border-radius: var(--r);
+  border: 1px solid var(--border); padding: 20px; margin-top: 14px;
+  box-shadow: 0 1px 8px rgba(15,30,45,0.05);
+}
+section h2 {
+  font-family: 'Instrument Serif', serif; font-size: 17px; font-weight: 400;
+  color: var(--ink); margin-bottom: 16px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.field { margin-bottom: 16px; }
+label { display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.04em; }
+input[type=text], select {
+  width: 100%; padding: 10px 13px; border: 1.5px solid var(--border);
+  border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 14px;
+  color: var(--ink); background: var(--bg); transition: border-color 0.18s;
+}
+input[type=text]:focus, select:focus { outline: none; border-color: var(--accent); background: #fff; }
+
+/* EVA */
+.eva-box { background: var(--bg); border-radius: 10px; padding: 16px; border: 1px solid var(--border); }
+.eva-center { text-align: center; margin-bottom: 10px; }
+.eva-num { font-family: 'Instrument Serif', serif; font-size: 48px; line-height: 1; }
+.eva-lbl { font-size: 12px; color: var(--muted); margin-top: 3px; }
+input[type=range] {
+  width: 100%; height: 6px; border-radius: 3px;
+  outline: none; cursor: pointer; -webkit-appearance: none; margin: 4px 0;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px;
+  border-radius: 50%; background: var(--accent);
+  box-shadow: 0 2px 8px rgba(30,111,168,0.35); cursor: pointer;
+}
+.eva-scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+/* Chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 8px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+  background: var(--card); color: var(--muted); font-family: 'Outfit', sans-serif;
+  font-size: 13px; cursor: pointer; transition: all 0.18s;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip.sel { border-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 600; }
+.chip.sel-g { border-color: var(--green); background: var(--green-light); color: var(--green); font-weight: 600; }
+.chip.sel-r { border-color: var(--red); background: var(--red-light); color: var(--red); font-weight: 600; }
+
+/* Alerte */
+.alerte { background: var(--red-light); border: 1px solid #f0b8b8; border-radius: 10px; padding: 13px 16px; margin-top: 14px; font-size: 13px; color: var(--red); display: none; }
+.alerte.show { display: block; }
+
+/* Textarea */
+textarea { width: 100%; padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 14px; color: var(--ink); background: var(--bg); resize: vertical; min-height: 70px; }
+textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
+
+/* Cond */
+.cond { display: none; }
+.cond.show { display: block; margin-top: 14px; }
+
+/* Submit */
+.submit-btn {
+  width: 100%; padding: 16px; background: var(--ink); color: white;
+  border: none; border-radius: var(--r); font-family: 'Instrument Serif', serif;
+  font-size: 19px; cursor: pointer; margin-top: 18px; transition: background 0.2s; letter-spacing: 0.02em;
+}
+.submit-btn:hover { background: var(--accent); }
+
+/* ═══ ÉCRAN CODE ═══ */
+#screenCode { display: none; padding: 0; }
+
+.code-hero {
+  background: var(--ink); color: white; border-radius: var(--r);
+  padding: 28px 22px; margin-top: 20px; text-align: center;
+}
+.code-hero h2 { font-family: 'Instrument Serif', serif; font-size: 22px; font-weight: 400; margin-bottom: 8px; }
+.code-hero p { font-size: 13px; opacity: 0.65; margin-bottom: 20px; }
+
+.code-block {
+  background: #1e3550; border-radius: 10px;
+  padding: 16px; margin: 0 0 16px; position: relative;
+}
+.code-text {
+  font-family: 'Courier New', monospace; font-size: 13px;
+  color: #62c4e8; word-break: break-all; line-height: 1.6;
+  letter-spacing: 0.03em;
+}
+.copy-btn {
+  width: 100%; padding: 13px; background: #62c4e8; color: var(--ink);
+  border: none; border-radius: 8px; font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.copy-btn:hover { background: #8dd8f0; }
+.copy-btn.copied { background: var(--green-light); color: var(--green); }
+
+.instruct-card {
+  background: var(--card); border-radius: var(--r);
+  border: 1px solid var(--border); padding: 20px; margin-top: 14px;
+}
+.instruct-card h3 { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 14px; }
+.step-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+.step-num {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--accent);
+  color: white; font-size: 12px; font-weight: 700; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+}
+.step-row p { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+.step-row strong { color: var(--ink); }
+
+.recap-card {
+  background: var(--green-light); border: 1px solid #b6dfc8;
+  border-radius: var(--r); padding: 16px; margin-top: 14px;
+}
+.recap-card h3 { font-size: 13px; font-weight: 600; color: var(--green); margin-bottom: 10px; }
+.recap-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid #c8e8d4; }
+.recap-row:last-child { border-bottom: none; }
+.recap-key { color: var(--muted); }
+.recap-val { font-weight: 600; color: var(--ink); }
+
+.next-badge {
+  background: var(--amber-light); border: 1px solid #f0d899;
+  border-radius: 10px; padding: 13px 16px; margin-top: 14px;
+  font-size: 13px; color: var(--amber);
+}
+
+/* Form screen */
+#screenForm { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>Suivi post-infiltration</h1>
+    <p id="headerSub">Questionnaire de suivi — MED SPORT MEINAU · Dr Bidet</p>
+    <div class="progress"><div class="progress-fill" id="progBar"></div></div>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- ═══════════ ÉCRAN FORMULAIRE ═══════════ -->
+<div id="screenForm">
+
+  <!-- Temps -->
+  <div class="temps-row">
+    <button class="t-btn active" onclick="setTemps(this,'48h')">48h<small>J+2</small></button>
+    <button class="t-btn" onclick="setTemps(this,'S1')">Sem. 1<small>J+7</small></button>
+    <button class="t-btn" onclick="setTemps(this,'M1')">Mois 1<small>M+1</small></button>
+    <button class="t-btn" onclick="setTemps(this,'M3')">Mois 3<small>M+3</small></button>
+  </div>
+
+  <!-- Identification -->
+  <section>
+    <h2>Identification</h2>
+    <div class="field">
+      <label>Vos initiales *</label>
+      <input type="text" id="initiales" maxlength="5" placeholder="ex : JD" oninput="updateProg()">
+    </div>
+    <div class="field">
+      <label>Type de geste reçu *</label>
+      <div class="chips" id="gesteChips">
+        <span class="chip" onclick="selGeste(this,'PRP')">PRP</span>
+        <span class="chip" onclick="selGeste(this,'Corticoïde')">Corticoïde</span>
+        <span class="chip" onclick="selGeste(this,'AH')">Acide hyaluronique</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Localisation</label>
+      <select id="site">
+        <option value="">— Choisir —</option>
+        <option>Épaule D</option><option>Épaule G</option>
+        <option>Coude D</option><option>Coude G</option>
+        <option>Poignet D</option><option>Poignet G</option>
+        <option>Genou D</option><option>Genou G</option>
+        <option>Cheville D</option><option>Cheville G</option>
+        <option>Hanche D</option><option>Hanche G</option>
+        <option>Tendon Achille D</option><option>Tendon Achille G</option>
+        <option>Rachis lombaire</option><option>Autre</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- EVA -->
+  <section>
+    <h2>Douleur</h2>
+    <div class="field">
+      <label>Niveau de douleur actuel (0 = aucune · 10 = maximale)</label>
+      <div class="eva-box">
+        <div class="eva-center">
+          <div class="eva-num" id="evaNum" style="color:#1a7a50">0</div>
+          <div class="eva-lbl" id="evaLbl">Aucune douleur</div>
+        </div>
+        <input type="range" id="evaSlider" min="0" max="10" step="1" value="0"
+          oninput="updateEVA(this.value)"
+          style="background:linear-gradient(to right,#1a7a50 0%,#1a7a50 0%,#dce8f0 0%,#dce8f0 100%)">
+        <div class="eva-scale">
+          <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span>
+          <span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+        </div>
+      </div>
+      <div class="alerte" id="alerteFlare">
+        ⚠️ Une majoration temporaire de la douleur dans les 48h est fréquente après une infiltration (réaction post-infiltrative). Si vous avez de la fièvre, une rougeur extensive ou une douleur très intense : contactez le cabinet.
+      </div>
+    </div>
+    <div class="field" id="compareField" style="display:none">
+      <label>Par rapport à avant l'infiltration</label>
+      <div class="chips" id="compareChips">
+        <span class="chip sel-g" onclick="selChip(this,'compare','Très améliorée')">😌 Très améliorée</span>
+        <span class="chip sel-g" onclick="selChip(this,'compare','Améliorée')">↓ Améliorée</span>
+        <span class="chip" onclick="selChip(this,'compare','Identique')">=  Identique</span>
+        <span class="chip sel-r" onclick="selChip(this,'compare','Aggravée')">↑ Aggravée</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PGIC -->
+  <section>
+    <h2>État général depuis l'infiltration</h2>
+    <div class="field">
+      <label>Toutes dimensions confondues (douleur, activité, qualité de vie)</label>
+      <div class="chips" style="flex-direction:column;gap:7px" id="pgicChips">
+        <span class="chip sel-g" onclick="selChip(this,'pgic','1')">1 — Très nettement amélioré(e)</span>
+        <span class="chip sel-g" onclick="selChip(this,'pgic','2')">2 — Nettement amélioré(e)</span>
+        <span class="chip sel-g" onclick="selChip(this,'pgic','3')">3 — Un peu amélioré(e)</span>
+        <span class="chip" onclick="selChip(this,'pgic','4')">4 — Pas de changement</span>
+        <span class="chip sel-r" onclick="selChip(this,'pgic','5')">5 — Un peu aggravé(e)</span>
+        <span class="chip sel-r" onclick="selChip(this,'pgic','6')">6 — Nettement aggravé(e)</span>
+        <span class="chip sel-r" onclick="selChip(this,'pgic','7')">7 — Très nettement aggravé(e)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reprise -->
+  <section>
+    <h2>Activité sportive</h2>
+    <div class="field">
+      <label>Avez-vous repris une activité sportive ?</label>
+      <div class="chips" id="repriseChips">
+        <span class="chip sel-g" onclick="selReprise(this,'Totale')">✓ Reprise totale</span>
+        <span class="chip" onclick="selReprise(this,'Partielle')">≈ Reprise partielle</span>
+        <span class="chip" onclick="selReprise(this,'Non-prescrit')">✗ Non (prescrit)</span>
+        <span class="chip sel-r" onclick="selReprise(this,'Non-douleur')">✗ Non (douleur)</span>
+      </div>
+    </div>
+    <div class="cond" id="partielCond">
+      <label style="font-size:12px;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:0.04em">À quel pourcentage ?</label>
+      <div class="chips" id="pctChips">
+        <span class="chip" onclick="selChip(this,'pct','25%')">25 %</span>
+        <span class="chip" onclick="selChip(this,'pct','50%')">50 %</span>
+        <span class="chip" onclick="selChip(this,'pct','75%')">75 %</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Remarques -->
+  <section>
+    <h2>Message pour le Dr Bidet</h2>
+    <div class="field">
+      <label>Remarques libres (optionnel)</label>
+      <textarea id="remarques" placeholder="Questions, effets remarqués, gêne particulière…"></textarea>
+    </div>
+    <div class="field">
+      <label>Souhaitez-vous être recontacté(e) ?</label>
+      <div class="chips" id="recontactChips">
+        <span class="chip sel-g" onclick="selChip(this,'recontact','Non')">Non, tout va bien</span>
+        <span class="chip" onclick="selChip(this,'recontact','Oui-message')">Oui, par message</span>
+        <span class="chip sel-r" onclick="selChip(this,'recontact','Urgent')">⚠ Urgent</span>
+      </div>
+    </div>
+  </section>
+
+  <button class="submit-btn" onclick="genererCode()">Générer mon code de suivi →</button>
+
+</div>
+
+<!-- ═══════════ ÉCRAN CODE ═══════════ -->
+<div id="screenCode">
+
+  <div class="code-hero">
+    <h2>Votre code est prêt ✓</h2>
+    <p>Copiez ce code et envoyez-le au Dr Bidet<br>par SMS, Doctolib ou email</p>
+    <div class="code-block">
+      <div class="code-text" id="codeText">—</div>
+    </div>
+    <button class="copy-btn" id="copyBtn" onclick="copierCode()">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="9" height="9" rx="1.5"/><path d="M12 8V5.5A1.5 1.5 0 0 0 10.5 4H5.5A1.5 1.5 0 0 0 4 5.5v5A1.5 1.5 0 0 0 5.5 12H8"/></svg>
+      Copier le code
+    </button>
+  </div>
+
+  <!-- Instructions -->
+  <div class="instruct-card">
+    <h3>Comment envoyer votre code ?</h3>
+    <div class="step-row">
+      <div class="step-num">1</div>
+      <p>Appuyez sur <strong>« Copier le code »</strong> ci-dessus — le code est maintenant dans votre presse-papier</p>
+    </div>
+    <div class="step-row">
+      <div class="step-num">2</div>
+      <p>Ouvrez <strong>Doctolib</strong> → Messages → Dr Bidet, <strong>ou</strong> ouvrez votre application SMS</p>
+    </div>
+    <div class="step-row">
+      <div class="step-num">3</div>
+      <p>Collez le code dans le message (<strong>appui long → Coller</strong>) et envoyez</p>
+    </div>
+    <div class="step-row" style="margin-bottom:0">
+      <div class="step-num">4</div>
+      <p>C'est tout ! Votre médecin l'importera directement dans votre dossier de suivi</p>
+    </div>
+  </div>
+
+  <!-- Récapitulatif -->
+  <div class="recap-card">
+    <h3>✓ Récapitulatif de vos réponses</h3>
+    <div id="recapContent"></div>
+  </div>
+
+  <!-- Prochain RDV -->
+  <div class="next-badge" id="nextBadge"></div>
+
+</div>
+
+</div><!-- /container -->
+
+<script>
+let formData = {
+  temps: '48h', initiales: '', geste: '', site: '',
+  eva: 0, compare: '', pgic: '', reprise: '', pct: '',
+  recontact: '', remarques: ''
+};
+
+// Temps
+function setTemps(btn, t) {
+  document.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  formData.temps = t;
+  document.getElementById('compareField').style.display = t === '48h' ? 'none' : 'block';
+  updateProg();
+}
+
+// Geste
+function selGeste(el, val) {
+  document.querySelectorAll('#gesteChips .chip').forEach(c => c.classList.remove('sel','sel-g','sel-r'));
+  el.classList.add('sel');
+  formData.geste = val;
+  updateProg();
+}
+
+// EVA
+function updateEVA(v) {
+  formData.eva = parseInt(v);
+  const pct = v * 10;
+  const colors = ['#1a7a50','#1a7a50','#1a7a50','#4a7a1e','#4a7a1e','#b86b00','#b86b00','#c04010','#c04010','#b02020','#b02020'];
+  const labels = ['Aucune douleur','Douleur très légère','Douleur légère','Douleur légère','Douleur modérée','Douleur modérée','Douleur importante','Douleur sévère','Douleur sévère','Douleur intense','Douleur maximale'];
+  const c = colors[parseInt(v)];
+  document.getElementById('evaNum').textContent = v;
+  document.getElementById('evaNum').style.color = c;
+  document.getElementById('evaLbl').textContent = labels[parseInt(v)];
+  document.getElementById('evaSlider').style.background = `linear-gradient(to right,${c} 0%,${c} ${pct}%,#dce8f0 ${pct}%,#dce8f0 100%)`;
+  // Alerte flare
+  const showFlare = parseInt(v) >= 7 && formData.temps === '48h' && (formData.geste === 'PRP' || formData.geste === 'Corticoïde');
+  document.getElementById('alerteFlare').classList.toggle('show', showFlare);
+  updateProg();
+}
+
+// Chip générique
+function selChip(el, field, val) {
+  const container = el.closest('.chips, [id$="Chips"]');
+  if (container) container.querySelectorAll('.chip').forEach(c => c.classList.remove('sel','sel-g','sel-r'));
+  const isGood = ['Très améliorée','Améliorée','1','2','3','Non','Totale'].includes(val);
+  const isBad = ['Aggravée','5','6','7','Non-douleur','Urgent'].includes(val);
+  el.classList.add(isBad ? 'sel-r' : isGood ? 'sel-g' : 'sel');
+  formData[field] = val;
+  updateProg();
+}
+
+// Reprise
+function selReprise(el, val) {
+  document.querySelectorAll('#repriseChips .chip').forEach(c => c.classList.remove('sel','sel-g','sel-r'));
+  const isBad = val === 'Non-douleur';
+  const isGood = val === 'Totale';
+  el.classList.add(isBad ? 'sel-r' : isGood ? 'sel-g' : 'sel');
+  formData.reprise = val;
+  document.getElementById('partielCond').classList.toggle('show', val === 'Partielle');
+  updateProg();
+}
+
+// Progress
+function updateProg() {
+  formData.initiales = document.getElementById('initiales').value;
+  formData.site = document.getElementById('site').value;
+  formData.remarques = document.getElementById('remarques').value;
+  let s = 5;
+  if (formData.initiales) s += 20;
+  if (formData.geste) s += 20;
+  if (formData.eva > 0) s += 15;
+  if (formData.pgic) s += 20;
+  if (formData.reprise) s += 20;
+  document.getElementById('progBar').style.width = Math.min(s, 100) + '%';
+}
+
+// ═══ GÉNÉRATION DU CODE ═══
+function genererCode() {
+  formData.initiales = document.getElementById('initiales').value.trim().toUpperCase();
+  formData.site = document.getElementById('site').value;
+  formData.remarques = document.getElementById('remarques').value.trim();
+
+  if (!formData.initiales || !formData.geste) {
+    alert('Merci de renseigner vos initiales et le type de geste reçu.');
+    return;
+  }
+  if (!formData.pgic) {
+    alert('Merci de renseigner votre état général (PGIC).');
+    return;
+  }
+
+  // Construction du code
+  const parts = [
+    'INFILT',
+    formData.initiales,
+    formData.temps,
+    'G:' + formData.geste,
+    formData.site ? 'S:' + formData.site.replace(/ /g,'_') : '',
+    'EVA:' + formData.eva,
+    'PGIC:' + formData.pgic,
+    'R:' + (formData.reprise || 'ND'),
+    formData.pct ? 'PCT:' + formData.pct : '',
+    formData.compare ? 'CMP:' + formData.compare.replace(/ /g,'_') : '',
+    formData.recontact ? 'RC:' + formData.recontact : '',
+    formData.remarques ? 'NOTE:' + formData.remarques.slice(0,60).replace(/\|/g,'-') : ''
+  ].filter(Boolean).join('|');
+
+  document.getElementById('codeText').textContent = parts;
+
+  // Récap lisible
+  const pgicLabels = {'1':'Très nettement amélioré(e)','2':'Nettement amélioré(e)','3':'Un peu amélioré(e)','4':'Pas de changement','5':'Un peu aggravé(e)','6':'Nettement aggravé(e)','7':'Très nettement aggravé(e)'};
+  const repriseLabels = {'Totale':'Oui, totale','Partielle':'Oui, partielle','Non-prescrit':'Non (arrêt prescrit)','Non-douleur':'Non (douleur)'};
+
+  document.getElementById('recapContent').innerHTML = [
+    ['Patient', formData.initiales],
+    ['Temps', formData.temps],
+    ['Geste', formData.geste + (formData.site ? ' · ' + formData.site : '')],
+    ['EVA', formData.eva + '/10'],
+    ['État général', pgicLabels[formData.pgic] || '—'],
+    ['Reprise sportive', repriseLabels[formData.reprise] || '—'],
+    formData.recontact ? ['Recontact souhaité', formData.recontact] : null,
+    formData.remarques ? ['Note', formData.remarques.slice(0,50) + (formData.remarques.length > 50 ? '…' : '')] : null
+  ].filter(Boolean).map(([k,v]) =>
+    `<div class="recap-row"><span class="recap-key">${k}</span><span class="recap-val">${v}</span></div>`
+  ).join('');
+
+  // Prochain temps
+  const next = {'48h':'Semaine 1 (J+7)','S1':'Mois 1 (M+1)','M1':'Mois 3 (M+3)','M3':null};
+  const n = next[formData.temps];
+  document.getElementById('nextBadge').innerHTML = n
+    ? `📅 Prochain questionnaire : <strong>${n}</strong>. Votre médecin vous enverra un rappel.`
+    : `🏁 Suivi complet terminé. Merci pour votre participation à l'ensemble du protocole !`;
+
+  // Afficher l'écran code
+  document.getElementById('screenForm').style.display = 'none';
+  document.getElementById('screenCode').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+// Copier
+function copierCode() {
+  const code = document.getElementById('codeText').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Code copié !';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="9" height="9" rx="1.5"/><path d="M12 8V5.5A1.5 1.5 0 0 0 10.5 4H5.5A1.5 1.5 0 0 0 4 5.5v5A1.5 1.5 0 0 0 5.5 12H8"/></svg> Copier le code`;
+      btn.classList.remove('copied');
+    }, 3000);
+  }).catch(() => {
+    // Fallback
+    const el = document.createElement('textarea');
+    el.value = code; document.body.appendChild(el);
+    el.select(); document.execCommand('copy'); document.body.removeChild(el);
+    document.getElementById('copyBtn').textContent = '✓ Copié !';
+  });
+}
+
+// Init
+updateEVA(0);
+document.getElementById('compareField').style.display = 'none';
+</script>
+</body>
+</html>
